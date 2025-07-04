@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auto Platform</title>
+    <style>
+        .error-message {
+            color: red;
+            font-size: 14px;
+            margin-top: 4px;
+            display: none;
+        }
+    </style>
+    <script>
+        function isValidURL(str) {
+            try {
+                new URL(str);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+        function validateURL() {
+            const urlField = document.getElementById('urlInput');
+            const errorText = document.getElementById('urlError');
+            const urlValue = urlField.value.trim();
+
+            if (!urlValue || !isValidURL(urlValue)) {
+                errorText.style.display = 'block';
+                errorText.textContent = "❌ Please enter a valid URL.";
+            } else {
+                errorText.style.display = 'none';
+            }
+        }
+        function handleURLInput() {
+            const urlField = document.getElementById('urlInput');
+            const errorText = document.getElementById('urlError');
+            const urlValue = urlField.value.trim();
+
+            if (urlValue && !isValidURL(urlValue)) {
+                errorText.style.display = 'block';
+                errorText.textContent = "❌ Please enter a valid URL.";
+            } else {
+                errorText.style.display = 'none';
+            }
+
+            
+        }
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            alert(result.message);
+        }
+
+        async function run_ocr() {
+            const response = await fetch('/run_ocr', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            const result = await response.json();
+            alert(result.message || result.error);
+        }
+        async function save_url() {
+            const urlField = document.getElementById('urlInput');
+            const urlValue = urlField.value.trim();
+            const response = await fetch('/save_url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: urlValue })
+        });
+
+        const result = await response.json();
+        alert(result.message || result.error);
+        }
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('urlInput').addEventListener('input', handleURLInput);
+        });
+
+         async function fetch_url() {
+            const response = await fetch('/fetch_url', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            const result = await response.json();
+            alert(result.message || result.error);
+        }
+        async function scrape_page() {
+            const response = await fetch('/scrape_url', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            const result = await response.json();
+            alert(result.message || result.error);
+        }
+    </script>
+</head>
+<body>
+    <h1>Automation Platform</h1>
+
+    <h3>Upload Document</h3>
+    <input type="file" id="fileInput" />
+    <button onclick="uploadFile()">Upload</button>
+
+    <h3>Process these documents</h3>
+    <button onclick="run_ocr()">Run OCR</button>
+
+    <h3>Provide URL (Optional)</h3>
+    <input type="text" id="urlInput" placeholder="Enter a valid URL" style="width: 300px;" />
+    <div id="urlError" class="error-message">❌ Please enter a valid URL.</div>
+    <br />
+    <button onclick="save_url()">Validate URL</button>
+
+    <h3>Fetch url</h3>
+    <button onclick="scrape_page()">Run OCR</button>
+    
+</body>
+</html>
