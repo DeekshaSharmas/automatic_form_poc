@@ -47,7 +47,7 @@ def generate_semantic_mapping():
         - keys = form field names
         - values = selected values from the user data
         """
-
+        print("🔁 Generating semantic mapping...",api_key)
         response = openai.chat.completions.create(
             model=fine_tune_model,  # Replace with your actual fine-tuned model ID
             messages=[{"role": "user", "content": prompt}]

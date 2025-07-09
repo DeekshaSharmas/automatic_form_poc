@@ -7,6 +7,8 @@ from scripts.ocr_script import process_document, append_any_json
 from scripts.saveurl_script import get_saved_url
 from scripts.scrape_form import scrape_saved_url
 from scripts.semnatic_mapping import generate_semantic_mapping
+from scripts.semantic_match import perform_semantic_mapping
+from scripts.retrain_model import train_model
 
 app = Flask(__name__)
 SESSION_FILE = "session_data.json"
@@ -90,22 +92,77 @@ def fetch_url():
 
     return jsonify({'url': url, 'message': '✅ Saved URL fetched successfully'})
 
+# @app.route('/scrape_url', methods=['GET'])
+# def scrape_url():
+#     success, message = scrape_saved_url()
+    
+#     print(f"🔗 Scraping URL: {message}")
+#     if success:
+#         mapping_success, mapping_message = perform_semantic_mapping()
+        
+#         print(f"🔗 Semantic mapping: {mapping_message}")
+#         if not mapping_success:
+#             return jsonify({'error': f"Mapping failed: {mapping_message}"}), 500
+        
+#         form_script_success, form_msg = generate_dynamic_form_script()
+#         if not form_script_success:
+#             return jsonify({'error': f"Script generation failed: {form_msg}"}), 500
+
+#         return jsonify({'message': "✅ Scrape, mapping, and script generation completed."})
+
+#         # return jsonify({'message': '✅ Scraping and semantic mapping completed successfully.'})
+#     else:
+#         return jsonify({'error': message}), 500
+    
 @app.route('/scrape_url', methods=['GET'])
 def scrape_url():
     success, message = scrape_saved_url()
+    print(f"🔗 Scraping URL: {message}")
+
     if success:
-        mapping_success, mapping_message = generate_semantic_mapping()
+        mapping_success, mapping_message = perform_semantic_mapping()
+        print(f"🔗 Semantic mapping: {mapping_message}")
+
         if not mapping_success:
             return jsonify({'error': f"Mapping failed: {mapping_message}"}), 500
-        
+
         form_script_success, form_msg = generate_dynamic_form_script()
+        print(f"🧠 Script Generation: {form_msg}")
+
         if not form_script_success:
             return jsonify({'error': f"Script generation failed: {form_msg}"}), 500
 
-        return jsonify({'message': "✅ Scrape, mapping, and script generation completed."})
+        # ✅ Now run the generated script
+        try:
+            import subprocess
 
-        # return jsonify({'message': '✅ Scraping and semantic mapping completed successfully.'})
+            print("🚀 Running generated script...")
+            result = subprocess.run(
+                ["python", "generated_fill_form2.py"],  # ensure lowercase `.py`
+                capture_output=True,
+                text=True,
+                check=True
+            )
+
+            print("📄 Script Output:\n", result.stdout)
+            if result.stderr:
+                print("⚠️ Script Errors:\n", result.stderr)
+                
+            train_model()
+            return jsonify({
+                'message': "✅ Scrape, mapping, script generation, and script execution completed.",
+                'script_output': result.stdout
+            })
+
+        except subprocess.CalledProcessError as e:
+            print("❌ Script execution failed:", e)
+            return jsonify({
+                'error': f"Script execution failed: {e}",
+                'stderr': e.stderr
+            }), 500
+
     else:
         return jsonify({'error': message}), 500
+
 if __name__ == '__main__':
     app.run(debug=True)
